@@ -8,6 +8,8 @@
 
 import Cocoa
 import FileKit
+import AVKit
+import AVFoundation
 
 class ViewController: NSViewController {
     private var url = NSURL()
@@ -103,12 +105,44 @@ class ViewController: NSViewController {
                 })
             }
             else if(type == "video") {
-                self.setTimer()
+                let uri = NSURL(fileURLWithPath: path)
+                let videoView = AVPlayerView()
+                videoView.frame.size = frameSize
+                videoView.bounds.size = boundsSize
+                videoView.wantsLayer = true
+                videoView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
+                let player = AVPlayer(URL: uri)
+                videoView.player = player
+                videoView.controlsStyle = AVPlayerViewControlsStyle.None
+                
+                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                    self.view.addSubview(videoView, positioned: NSWindowOrderingMode.Above, relativeTo: nil)
+                    NSAnimationContext.runAnimationGroup(
+                        { (context) -> Void in
+                            context.duration = 1.0
+                            videoView.animator().alphaValue = 1.0
+                            
+                        }, completionHandler: { () -> Void in
+                            for view in self.view.subviews {
+                                if(view != videoView) {
+                                    view.removeFromSuperview()
+                                }
+                            }
+                            NSNotificationCenter.defaultCenter().addObserver(self, selector: "playerDidFinishPlaying:", name: AVPlayerItemDidPlayToEndTimeNotification, object: videoView.player!.currentItem)
+                            videoView.player!.play()
+                        }
+                    )
+                })
             }
             else {
                 self.setTimer()
             }
         })
+    }
+    
+    func playerDidFinishPlaying(note: NSNotification) {
+        self.showNextSlide()
+        NSNotificationCenter.defaultCenter().removeObserver(self)
     }
     
     private func stopSlideshow() {
@@ -211,6 +245,15 @@ class ViewController: NSViewController {
                     NSLog("No changes")
                     return
                 }
+                if let outputStream = NSOutputStream(toFileAtPath: jsonLocation.rawValue, append: false) {
+                    outputStream.open()
+                    if let jsonText = String(data: dumpData, encoding: NSUTF8StringEncoding) {
+                        outputStream.write(jsonText)
+                    }
+                    outputStream.close()
+                } else {
+                    NSLog("Unable to open file: %@", jsonLocation.rawValue)
+                }
             }
             else {
                 if let outputStream = NSOutputStream(toFileAtPath: jsonLocation.rawValue, append: false) {
@@ -228,7 +271,6 @@ class ViewController: NSViewController {
                 let cachedItems = cachedJSON["items"].array
                 if(items.count > 0) {
                     slideshowLoader.removeAll()
-                    var iterator = 0
                     for item in items {
                         if let itemUrl = item["url"].string {
                             if let itemNSURL = NSURL(string: itemUrl) {
@@ -238,9 +280,13 @@ class ViewController: NSViewController {
                                         let slideshowItem = SlideshowItem(url: itemNSURL, type: type, path: cachePath)
                                         do {
                                             let fileAttributes = try NSFileManager.defaultManager().attributesOfItemAtPath(NSURL(fileURLWithPath: cachePath.rawValue, isDirectory: false).path!)
-                                            let fileSize = String(fileAttributes[NSFileSize])
-                                            if(item["md5sum"] == cachedItems![iterator]["md5sum"] && item["filesize"].stringValue.isDifferentThan(fileSize)) {
-                                                slideshowItem.status = 1
+                                            let fileSize = fileAttributes[NSFileSize]
+                                            for cachedItem in cachedItems! {
+                                                if(itemUrl == cachedItem["url"].stringValue) {
+                                                    if(item["md5sum"] == cachedItem["md5sum"] && item["filesize"].stringValue == fileSize?.stringValue) {
+                                                        slideshowItem.status = 1
+                                                    }
+                                                }
                                             }
                                         }
                                         catch {
@@ -262,7 +308,6 @@ class ViewController: NSViewController {
                         else {
                             continue
                         }
-                        iterator++
                     }
                     downloadItems()
                 }
@@ -354,12 +399,6 @@ class ViewController: NSViewController {
     }
 
 
-}
-
-extension String {
-    func isDifferentThan(value: String?) -> Bool {
-        return value != nil && self != value
-    }
 }
 
 extension NSOutputStream {
