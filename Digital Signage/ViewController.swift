@@ -167,8 +167,9 @@ class ViewController: NSViewController {
                 self.addressBox.removeFromSuperview()
                 self.label.removeFromSuperview()
                 self.view.becomeFirstResponder()
-                if(!self.view.window?.)
-                self.view.window?.toggleFullScreen(nil)
+                if(!((self.view.window?.styleMask)! & NSFullScreenWindowMask == NSFullScreenWindowMask)) {
+                    self.view.window?.toggleFullScreen(nil)
+                }
                 let view = self.view as! MyView
                 view.trackMouse = true
                 view.setTimeout()
