@@ -201,7 +201,7 @@ class ViewController: NSViewController {
         }, completion: {
             let items = self.slideshowLoader
             let files = self.applicationSupport.find(searchDepth: 1) {
-            path in path.rawValue != "json.txt"
+                path in path.rawValue != self.applicationSupport.rawValue + "/json.txt"
             }
             for file in files {
                 var remove = true
