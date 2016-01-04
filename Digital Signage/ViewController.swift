@@ -151,18 +151,25 @@ class ViewController: NSViewController {
     }
     
     private func stopSlideshow() {
-        self.timer.invalidate()
+        dispatch_async(dispatch_get_main_queue(),{
+            self.timer.invalidate()
+        })
     }
     
     private func setUpdateTimer() {
-        self.updateTimer.invalidate()
-        self.updateTimer = NSTimer(timeInterval: 30, target: self, selector: "update", userInfo: nil, repeats: false)
-        NSRunLoop.currentRunLoop().addTimer(self.updateTimer, forMode: NSRunLoopCommonModes)
+        dispatch_async(dispatch_get_main_queue(),{
+            print("update timer")
+            self.updateTimer.invalidate()
+            self.updateTimer = NSTimer(timeInterval: 30, target: self, selector: "update", userInfo: nil, repeats: false)
+            NSRunLoop.currentRunLoop().addTimer(self.updateTimer, forMode: NSRunLoopCommonModes)
+        })
     }
     
     private func setTimer() {
-        self.timer = NSTimer(timeInterval: 5.0, target: self, selector: "backgroundUpdate:", userInfo: nil, repeats: false)
-        NSRunLoop.currentRunLoop().addTimer(self.timer, forMode: NSRunLoopCommonModes)
+        dispatch_async(dispatch_get_main_queue(),{
+            self.timer = NSTimer(timeInterval: 5.0, target: self, selector: "backgroundUpdate:", userInfo: nil, repeats: false)
+            NSRunLoop.currentRunLoop().addTimer(self.timer, forMode: NSRunLoopCommonModes)
+        })
     }
     
     private func startSlideshow() {

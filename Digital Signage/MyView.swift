@@ -23,9 +23,11 @@ class MyView: NSView {
     }
     
     func setTimeout() {
-        self.mouseTimer.invalidate()
-        self.mouseTimer = NSTimer(timeInterval: 5, target: self, selector: "hideCursor", userInfo: nil, repeats: false)
-        NSRunLoop.currentRunLoop().addTimer(self.mouseTimer, forMode: NSRunLoopCommonModes)
+        dispatch_async(dispatch_get_main_queue(),{
+            self.mouseTimer.invalidate()
+            self.mouseTimer = NSTimer(timeInterval: 5, target: self, selector: "hideCursor", userInfo: nil, repeats: false)
+            NSRunLoop.currentRunLoop().addTimer(self.mouseTimer, forMode: NSRunLoopCommonModes)
+        })
     }
     
     override func mouseMoved(theEvent: NSEvent) {
