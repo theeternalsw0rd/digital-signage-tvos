@@ -199,6 +199,28 @@ class ViewController: NSViewController {
             while(self.downloadQueue.operationCount > 0) {
             }
         }, completion: {
+            let items = self.slideshowLoader
+            let files = self.applicationSupport.find(searchDepth: 1) {
+            path in path.rawValue != "json.txt"
+            }
+            for file in files {
+                var remove = true
+                for item in items {
+                    if(item.path.rawValue == file.rawValue) {
+                        remove = false
+                        break
+                    }
+                }
+                if(remove) {
+                    let fileManager = NSFileManager.defaultManager()
+                    do {
+                        try fileManager.removeItemAtPath(file.rawValue)
+                    } catch {
+                        NSLog("Could not remove existing file: %@", file.rawValue)
+                        continue
+                    }
+                }
+            }
             if(self.initializing) {
                 self.initializing = false
                 self.button.removeFromSuperview()
