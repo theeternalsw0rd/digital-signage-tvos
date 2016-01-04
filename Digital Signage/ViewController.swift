@@ -106,14 +106,16 @@ class ViewController: NSViewController {
             }
             else if(type == "video") {
                 let uri = NSURL(fileURLWithPath: path)
-                let videoView = AVPlayerView()
+                let videoView = NSView()
                 videoView.frame.size = frameSize
                 videoView.bounds.size = boundsSize
+                videoView.alphaValue = 0
                 videoView.wantsLayer = true
                 videoView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
                 let player = AVPlayer(URL: uri)
-                videoView.player = player
-                videoView.controlsStyle = AVPlayerViewControlsStyle.None
+                let playerLayer = AVPlayerLayer(player: player)
+                playerLayer.videoGravity = AVLayerVideoGravityResize
+                videoView.layer = playerLayer
                 
                 dispatch_async(dispatch_get_main_queue(), { () -> Void in
                     self.view.addSubview(videoView, positioned: NSWindowOrderingMode.Above, relativeTo: nil)
@@ -128,8 +130,10 @@ class ViewController: NSViewController {
                                     view.removeFromSuperview()
                                 }
                             }
-                            NSNotificationCenter.defaultCenter().addObserver(self, selector: "playerDidFinishPlaying:", name: AVPlayerItemDidPlayToEndTimeNotification, object: videoView.player!.currentItem)
-                            videoView.player!.play()
+                            let playerLayer = videoView.layer as! AVPlayerLayer
+                            let player = playerLayer.player
+                            NSNotificationCenter.defaultCenter().addObserver(self, selector: "playerDidFinishPlaying:", name: AVPlayerItemDidPlayToEndTimeNotification, object: player!.currentItem)
+                            player!.play()
                         }
                     )
                 })
