@@ -1,5 +1,7 @@
 This application aims to make displaying a fullscreen slideshow on OS X 10.11+
 simple by receiving a JSON response from a server with the following structure:
+
+```
 {
 	"items":[
 		{
@@ -16,14 +18,17 @@ simple by receiving a JSON response from a server with the following structure:
 		}
 	]
 }
+```
 
 The JSON response and all resources must be served over https unless you modify
 the project in xcode to allow the application to use http.
 
 This project makes use of the following Cocoapods:
 
+```
 pod 'FileKit', '~> 2.0.0'
 pod 'Alamofire', '~> 3.0'
 pod 'SwiftyJSON', :git => 'https://github.com/SwiftyJSON/SwiftyJSON.git'
+```
 
 So as with any project using Cocoapods, you should use the xcworkspace instead of the xcodeproj.
