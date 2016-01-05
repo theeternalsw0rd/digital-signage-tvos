@@ -23,6 +23,10 @@ simple by receiving a JSON response from a server with the following structure:
 The JSON response and all resources must be served over https unless you modify
 the project in xcode to allow the application to use http.
 
+This application can handle jpeg and png images and any video format supported
+by Apple's AV Foundation. This application does not support subtitles or captions
+in the videos.
+
 This project makes use of the following Cocoapods:
 
 ```
