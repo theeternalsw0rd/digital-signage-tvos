@@ -5,6 +5,8 @@
 //  Created by Micah Bucy on 12/27/15.
 //  Copyright © 2015 Micah Bucy. All rights reserved.
 //
+//  The MIT License (MIT)
+//  This file is subject to the terms and conditions defined in LICENSE.md
 
 import Cocoa
 
@@ -41,5 +43,4 @@ class MyImageView: NSImageView {
         let trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
         self.addTrackingArea(trackingArea)
     }
-    
 }

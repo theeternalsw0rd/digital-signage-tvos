@@ -5,11 +5,14 @@
 //  Created by Micah Bucy on 12/17/15.
 //  Copyright © 2015 Micah Bucy. All rights reserved.
 //
+//  The MIT License (MIT)
+//  This file is subject to the terms and conditions defined in LICENSE.md
 
 import Cocoa
 import FileKit
 import AVKit
 import AVFoundation
+import SwiftyJSON
 
 class ViewController: NSViewController {
     private var url = NSURL()
@@ -289,25 +292,13 @@ class ViewController: NSViewController {
                         NSLog("No changes")
                         return
                     }
-                    if let outputStream = NSOutputStream(toFileAtPath: jsonLocation.rawValue, append: false) {
-                        outputStream.open()
-                        if let jsonText = String(data: dumpData!, encoding: NSUTF8StringEncoding) {
-                            outputStream.write(jsonText)
-                        }
-                        outputStream.close()
-                    } else {
-                        NSLog("Unable to open file: %@", jsonLocation.rawValue)
+                    if (!(dumpData!.writeToFile(jsonLocation.rawValue, atomically: true))) {
+                        NSLog("Unable to write to file %@", jsonLocation.rawValue)
                     }
                 }
                 else {
-                    if let outputStream = NSOutputStream(toFileAtPath: jsonLocation.rawValue, append: false) {
-                        outputStream.open()
-                        if let jsonText = String(data: dumpData!, encoding: NSUTF8StringEncoding) {
-                            outputStream.write(jsonText)
-                        }
-                        outputStream.close()
-                    } else {
-                        NSLog("Unable to open file: %@", jsonLocation.rawValue)
+                    if (!(dumpData!.writeToFile(jsonLocation.rawValue, atomically: true))) {
+                        NSLog("Unable to write to file %@", jsonLocation.rawValue)
                     }
                 }
                 let json = JSON(data: dumpData!)
@@ -443,42 +434,4 @@ class ViewController: NSViewController {
         // Update the view, if already loaded.
         }
     }
-
-
 }
-
-extension NSOutputStream {
-    
-    /// Write String to outputStream
-    ///
-    /// - parameter string:                The string to write.
-    /// - parameter encoding:              The NSStringEncoding to use when writing the string. This will default to UTF8.
-    /// - parameter allowLossyConversion:  Whether to permit lossy conversion when writing the string.
-    ///
-    /// - returns:                         Return total number of bytes written upon success. Return -1 upon failure.
-    
-    func write(string: String, encoding: NSStringEncoding = NSUTF8StringEncoding, allowLossyConversion: Bool = true) -> Int {
-        if let data = string.dataUsingEncoding(encoding, allowLossyConversion: allowLossyConversion) {
-            var bytes = UnsafePointer<UInt8>(data.bytes)
-            var bytesRemaining = data.length
-            var totalBytesWritten = 0
-            
-            while bytesRemaining > 0 {
-                let bytesWritten = self.write(bytes, maxLength: bytesRemaining)
-                if bytesWritten < 0 {
-                    return -1
-                }
-                
-                bytesRemaining -= bytesWritten
-                bytes += bytesWritten
-                totalBytesWritten += bytesWritten
-            }
-            
-            return totalBytesWritten
-        }
-        
-        return -1
-    }
-    
-}
-
