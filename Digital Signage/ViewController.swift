@@ -158,7 +158,6 @@ class ViewController: NSViewController {
     
     private func setUpdateTimer() {
         dispatch_async(dispatch_get_main_queue(),{
-            print("update timer")
             self.updateTimer.invalidate()
             self.updateTimer = NSTimer(timeInterval: 30, target: self, selector: "update", userInfo: nil, repeats: false)
             NSRunLoop.currentRunLoop().addTimer(self.updateTimer, forMode: NSRunLoopCommonModes)
@@ -206,28 +205,32 @@ class ViewController: NSViewController {
             while(self.downloadQueue.operationCount > 0) {
             }
         }, completion: {
-            let items = self.slideshowLoader
-            let files = self.applicationSupport.find(searchDepth: 1) {
-                path in path.rawValue != self.applicationSupport.rawValue + "/json.txt"
-            }
-            for file in files {
-                var remove = true
-                for item in items {
-                    if(item.path.rawValue == file.rawValue) {
-                        remove = false
-                        break
+            self.appDelegate.backgroundThread(
+                background: {
+                    let items = self.slideshowLoader
+                    let files = self.applicationSupport.find(searchDepth: 1) {
+                        path in path.rawValue != self.applicationSupport.rawValue + "/json.txt"
                     }
-                }
-                if(remove) {
-                    let fileManager = NSFileManager.defaultManager()
-                    do {
-                        try fileManager.removeItemAtPath(file.rawValue)
-                    } catch {
-                        NSLog("Could not remove existing file: %@", file.rawValue)
-                        continue
+                    for file in files {
+                        var remove = true
+                        for item in items {
+                            if(item.path.rawValue == file.rawValue) {
+                                remove = false
+                                break
+                            }
+                        }
+                        if(remove) {
+                            let fileManager = NSFileManager.defaultManager()
+                            do {
+                                try fileManager.removeItemAtPath(file.rawValue)
+                            } catch {
+                                NSLog("Could not remove existing file: %@", file.rawValue)
+                                continue
+                            }
+                        }
                     }
-                }
-            }
+                }, completion: {}
+            )
             if(self.initializing) {
                 self.initializing = false
                 self.button.removeFromSuperview()
