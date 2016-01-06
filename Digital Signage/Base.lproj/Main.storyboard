@@ -355,7 +355,7 @@
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="loadSignage:" target="XfG-lQ-9wD" id="a6H-2J-ajx"/>
+                                    <action selector="goButtonAction:" target="XfG-lQ-9wD" id="EbQ-hB-p8E"/>
                                 </connections>
                             </button>
                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="44W-9k-BEm">
@@ -363,11 +363,14 @@
                                 <constraints>
                                     <constraint firstAttribute="width" constant="292" id="0Gb-hj-f1b"/>
                                 </constraints>
-                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="c2D-Xm-uQV">
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="c2D-Xm-uQV">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
+                                <connections>
+                                    <action selector="addressBoxAction:" target="XfG-lQ-9wD" id="apb-By-egH"/>
+                                </connections>
                             </textField>
                         </subviews>
                         <constraints>
@@ -381,7 +384,7 @@
                     </view>
                     <connections>
                         <outlet property="addressBox" destination="44W-9k-BEm" id="5YN-3Q-hqc"/>
-                        <outlet property="button" destination="TdP-7B-p8w" id="3Hi-fo-5fm"/>
+                        <outlet property="goButton" destination="TdP-7B-p8w" id="2dR-wc-KHn"/>
                         <outlet property="label" destination="Q25-4Y-o1r" id="dUA-H3-9j9"/>
                     </connections>
                 </viewController>

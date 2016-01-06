@@ -28,10 +28,18 @@ class ViewController: NSViewController {
     private let appDelegate = NSApplication.sharedApplication().delegate as! AppDelegate
     private let downloadQueue = NSOperationQueue()
     
-    @IBOutlet weak var button: NSButton!
+    @IBOutlet weak var goButton: NSButton!
     @IBOutlet weak var addressBox: NSTextField!
     @IBOutlet weak var label: NSTextField!
-    @IBAction func loadSignage(sender: AnyObject) {
+    @IBAction func goButtonAction(sender: AnyObject) {
+        self.loadSignage()
+    }
+    
+    @IBAction func addressBoxAction(sender: AnyObject) {
+        self.loadSignage()
+    }
+    
+    private func loadSignage() {
         self.setUpdateTimer()
         if(!Path(stringInterpolation: self.applicationSupport).exists) {
             do {
@@ -224,7 +232,7 @@ class ViewController: NSViewController {
         }, completion: {
             if(self.initializing) {
                 self.initializing = false
-                self.button.removeFromSuperview()
+                self.goButton.removeFromSuperview()
                 self.addressBox.resignFirstResponder()
                 self.addressBox.removeFromSuperview()
                 self.label.removeFromSuperview()
