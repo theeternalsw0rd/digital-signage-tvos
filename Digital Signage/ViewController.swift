@@ -32,14 +32,31 @@ class ViewController: NSViewController {
     @IBOutlet weak var addressBox: NSTextField!
     @IBOutlet weak var label: NSTextField!
     @IBAction func goButtonAction(sender: AnyObject) {
-        self.loadSignage()
+        let urlString = self.addressBox.stringValue
+        NSUserDefaults.standardUserDefaults().setObject(urlString, forKey: "url")
+        self.loadSignage(urlString)
     }
     
     @IBAction func addressBoxAction(sender: AnyObject) {
-        self.loadSignage()
+        let urlString = self.addressBox.stringValue
+        NSUserDefaults.standardUserDefaults().setObject(urlString, forKey: "url")
+        self.loadSignage(urlString)
     }
     
-    private func loadSignage() {
+    func resetView() {
+        self.stopSlideshow()
+        self.stopUpdater()
+        NSUserDefaults.standardUserDefaults().removeObjectForKey("url")
+        self.initializing = true
+        self.releaseOtherViews(nil)
+        self.label.hidden = false
+        self.addressBox.hidden = false
+        self.addressBox.becomeFirstResponder()
+        self.goButton.hidden = false
+        self.view.needsLayout = true
+    }
+    
+    private func loadSignage(urlString: String) {
         self.setUpdateTimer()
         if(!Path(stringInterpolation: self.applicationSupport).exists) {
             do {
@@ -53,7 +70,6 @@ class ViewController: NSViewController {
                 return
             }
         }
-        let urlString = self.addressBox.stringValue
         if let _url = NSURL(string: urlString) {
             self.url = _url
             getJSON()
@@ -68,6 +84,15 @@ class ViewController: NSViewController {
     
     func backgroundUpdate(timer:NSTimer) {
         self.showNextSlide()
+    }
+    
+    private func releaseOtherViews(imageView: NSView?) {
+        for view in self.view.subviews {
+            // hide views that need to retain properties
+            if(view != imageView && !(view.hidden)) {
+                view.removeFromSuperview()
+            }
+        }
     }
     
     private func playVideo(frameSize: NSSize, boundsSize: NSSize, uri: NSURL) {
@@ -109,11 +134,7 @@ class ViewController: NSViewController {
                     imageView.animator().alphaValue = 1.0
                     
                 }, completionHandler: { () -> Void in
-                    for view in self.view.subviews {
-                        if(view != imageView) {
-                            view.removeFromSuperview()
-                        }
-                    }
+                    self.releaseOtherViews(imageView)
                     if(thumbnail) {
                         let item = self.slideshow[self.currentSlideIndex]
                         let path = item.path.rawValue
@@ -181,6 +202,12 @@ class ViewController: NSViewController {
         })
     }
     
+    private func stopUpdater() {
+        dispatch_async(dispatch_get_main_queue(),{
+            self.updateTimer.invalidate()
+        })
+    }
+    
     private func setUpdateTimer() {
         dispatch_async(dispatch_get_main_queue(),{
             self.updateTimer.invalidate()
@@ -228,14 +255,15 @@ class ViewController: NSViewController {
         self.appDelegate.backgroundThread(background: {
             self.downloadQueue.suspended = false
             while(self.downloadQueue.operationCount > 0) {
+                usleep(100000)
             }
         }, completion: {
             if(self.initializing) {
                 self.initializing = false
-                self.goButton.removeFromSuperview()
+                self.goButton.hidden = true
                 self.addressBox.resignFirstResponder()
-                self.addressBox.removeFromSuperview()
-                self.label.removeFromSuperview()
+                self.addressBox.hidden = true
+                self.label.hidden = true
                 self.view.becomeFirstResponder()
                 if(!((self.view.window?.styleMask)! & NSFullScreenWindowMask == NSFullScreenWindowMask)) {
                     self.view.window?.toggleFullScreen(nil)
@@ -442,13 +470,18 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.window?.acceptsMouseMovedEvents = true
+        if let urlString = NSUserDefaults.standardUserDefaults().stringForKey("url") {
+            self.loadSignage(urlString)
+        }
     }
     
     override func viewDidAppear() {
         super.viewDidAppear()
-        dispatch_async(dispatch_get_main_queue(), { () -> Void in
-            self.addressBox.becomeFirstResponder()
-        })
+        if(self.addressBox.isDescendantOf(self.view)) {
+            dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                self.addressBox.becomeFirstResponder()
+            })
+        }
     }
 
     override var representedObject: AnyObject? {

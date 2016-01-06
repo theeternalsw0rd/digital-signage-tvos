@@ -14,6 +14,10 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
 
 
+    @IBAction func changeUrl(sender: AnyObject) {
+        let baseController = NSApplication.sharedApplication().mainWindow?.contentViewController as! ViewController
+        baseController.resetView()
+    }
 
     func applicationDidFinishLaunching(aNotification: NSNotification) {
         // Insert code here to initialize your application

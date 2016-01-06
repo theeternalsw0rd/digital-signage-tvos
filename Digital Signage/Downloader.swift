@@ -38,7 +38,7 @@ class Downloader: NSOperation {
             }
         }
         while(self.item.status == 0) {
-            
+            usleep(100000)
         }
     }
 }
