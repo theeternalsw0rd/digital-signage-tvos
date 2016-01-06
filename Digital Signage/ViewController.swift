@@ -62,6 +62,64 @@ class ViewController: NSViewController {
         self.showNextSlide()
     }
     
+    private func playVideo(frameSize: NSSize, boundsSize: NSSize, uri: NSURL) {
+        let videoView = NSView()
+        videoView.frame.size = frameSize
+        videoView.bounds.size = boundsSize
+        videoView.wantsLayer = true
+        videoView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
+        let player = AVPlayer(URL: uri)
+        let playerLayer = AVPlayerLayer(player: player)
+        playerLayer.videoGravity = AVLayerVideoGravityResize
+        videoView.layer = playerLayer
+        videoView.layer?.backgroundColor = CGColorCreateGenericRGB(0, 0, 0, 0)
+        self.view.addSubview(videoView, positioned: NSWindowOrderingMode.Above, relativeTo: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "playerDidFinishPlaying:", name: AVPlayerItemDidPlayToEndTimeNotification, object: player.currentItem)
+        player.play()
+    }
+    
+    private func createImageView(image: NSImage, thumbnail: Bool, frameSize: NSSize, boundsSize: NSSize) {
+        let imageView = MyImageView()
+        imageView.removeConstraints(imageView.constraints)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.alphaValue = 0
+        if(thumbnail) {
+            imageView.image = image
+        }
+        else {
+            imageView.imageWithSize(image, w: frameSize.width, h: frameSize.height)
+        }
+        imageView.frame.size = frameSize
+        imageView.bounds.size = boundsSize
+        imageView.wantsLayer = true
+        imageView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
+        dispatch_async(dispatch_get_main_queue(), { () -> Void in
+            self.view.addSubview(imageView, positioned: NSWindowOrderingMode.Above, relativeTo: nil)
+            NSAnimationContext.runAnimationGroup(
+                { (context) -> Void in
+                    context.duration = 1.0
+                    imageView.animator().alphaValue = 1.0
+                    
+                }, completionHandler: { () -> Void in
+                    for view in self.view.subviews {
+                        if(view != imageView) {
+                            view.removeFromSuperview()
+                        }
+                    }
+                    if(thumbnail) {
+                        let item = self.slideshow[self.currentSlideIndex]
+                        let path = item.path.rawValue
+                        let uri = NSURL(fileURLWithPath: path)
+                        self.playVideo(frameSize, boundsSize: boundsSize, uri: uri)
+                    }
+                    else {
+                        self.setTimer()
+                    }
+                }
+            )
+        })
+    }
+    
     private func showNextSlide() {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), { () -> Void in
             self.currentSlideIndex++
@@ -79,68 +137,24 @@ class ViewController: NSViewController {
             let frameSize = self.view.frame.size
             let boundsSize = self.view.bounds.size
             if(type == "image") {
-                let imageView = MyImageView()
-                imageView.removeConstraints(imageView.constraints)
-                imageView.translatesAutoresizingMaskIntoConstraints = false
-                imageView.alphaValue = 0
-                imageView.imageWithSize(path, w: frameSize.width, h: frameSize.height)
-                imageView.frame.size = frameSize
-                imageView.bounds.size = boundsSize
-                imageView.wantsLayer = true
-                imageView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
-                
-                dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                    self.view.addSubview(imageView, positioned: NSWindowOrderingMode.Above, relativeTo: nil)
-                    NSAnimationContext.runAnimationGroup(
-                        { (context) -> Void in
-                            context.duration = 1.0
-                            imageView.animator().alphaValue = 1.0
-                        
-                        }, completionHandler: { () -> Void in
-                            for view in self.view.subviews {
-                                if(view != imageView) {
-                                    view.removeFromSuperview()
-                                }
-                            }
-                            self.setTimer()
-                        }
-                    )
-                })
+                let image = NSImage(contentsOfFile: path)
+                self.createImageView(image!, thumbnail: false, frameSize: frameSize, boundsSize: boundsSize)
             }
             else if(type == "video") {
                 let uri = NSURL(fileURLWithPath: path)
-                let videoView = NSView()
-                videoView.frame.size = frameSize
-                videoView.bounds.size = boundsSize
-                videoView.alphaValue = 0
-                videoView.wantsLayer = true
-                videoView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
-                let player = AVPlayer(URL: uri)
-                let playerLayer = AVPlayerLayer(player: player)
-                playerLayer.videoGravity = AVLayerVideoGravityResize
-                videoView.layer = playerLayer
-                videoView.layer?.backgroundColor = CGColorCreateGenericRGB(0, 0, 0, 1)
-                
-                dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                    self.view.addSubview(videoView, positioned: NSWindowOrderingMode.Above, relativeTo: nil)
-                    NSAnimationContext.runAnimationGroup(
-                        { (context) -> Void in
-                            context.duration = 1.0
-                            videoView.animator().alphaValue = 1.0
-                            
-                        }, completionHandler: { () -> Void in
-                            for view in self.view.subviews {
-                                if(view != videoView) {
-                                    view.removeFromSuperview()
-                                }
-                            }
-                            let playerLayer = videoView.layer as! AVPlayerLayer
-                            let player = playerLayer.player
-                            NSNotificationCenter.defaultCenter().addObserver(self, selector: "playerDidFinishPlaying:", name: AVPlayerItemDidPlayToEndTimeNotification, object: player!.currentItem)
-                            player!.play()
+                let avAsset = AVURLAsset(URL: uri)
+                let avAssetImageGenerator = AVAssetImageGenerator(asset: avAsset)
+                let time = NSValue(CMTime: CMTimeMake(0, 1))
+                avAssetImageGenerator.generateCGImagesAsynchronouslyForTimes([time],
+                    completionHandler: {(_, image:CGImage?, _, _, error:NSError?) in
+                        if(error == nil) {
+                            self.createImageView(NSImage(CGImage: image!, size: frameSize), thumbnail: true, frameSize: frameSize, boundsSize: boundsSize)
                         }
-                    )
-                })
+                        else {
+                            self.playVideo(frameSize, boundsSize: boundsSize, uri: uri)
+                        }
+                    }
+                )
             }
             else {
                 self.setTimer()

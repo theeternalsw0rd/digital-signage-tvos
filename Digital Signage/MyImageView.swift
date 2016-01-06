@@ -12,12 +12,11 @@ import Cocoa
 
 class MyImageView: NSImageView {
     
-    func imageWithSize(path: String, w: CGFloat, h: CGFloat) {
-        let image = NSImage(contentsOfFile: path)
+    func imageWithSize(image: NSImage, w: CGFloat, h: CGFloat) {
         let destSize = NSMakeSize(w, h)
         let newImage = NSImage(size: destSize)
         newImage.lockFocus()
-        image!.drawInRect(NSMakeRect(0, 0, destSize.width, destSize.height), fromRect: NSMakeRect(0, 0, image!.size.width, image!.size.height), operation: NSCompositingOperation.CompositeSourceOver, fraction: CGFloat(1))
+        image.drawInRect(NSMakeRect(0, 0, destSize.width, destSize.height), fromRect: NSMakeRect(0, 0, image.size.width, image.size.height), operation: NSCompositingOperation.CompositeSourceOver, fraction: CGFloat(1))
         newImage.unlockFocus()
         newImage.size = destSize
         self.image = NSImage(data: newImage.TIFFRepresentation!)!
