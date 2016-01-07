@@ -18,16 +18,19 @@ class ViewController: NSViewController {
     private var url = NSURL()
     private var slideshow : [SlideshowItem] = []
     private var slideshowLoader : [SlideshowItem] = []
+    private var countdowns : [Countdown] = []
     private var slideshowLength = 0
     private var currentSlideIndex = -1
     private var timer = NSTimer()
     private var updateTimer = NSTimer()
+    private var countdownTimer = NSTimer()
     private var updateReady = false
     private var initializing = true
     private var applicationSupport = Path.UserApplicationSupport + "/theeternalsw0rd/Digital Signage"
     private let appDelegate = NSApplication.sharedApplication().delegate as! AppDelegate
     private let downloadQueue = NSOperationQueue()
     
+    @IBOutlet weak var countdown: NSTextField!
     @IBOutlet weak var goButton: NSButton!
     @IBOutlet weak var addressBox: NSTextField!
     @IBOutlet weak var label: NSTextField!
@@ -46,11 +49,17 @@ class ViewController: NSViewController {
     func resetView() {
         self.stopSlideshow()
         self.stopUpdater()
+        self.stopCountdowns()
+        self.countdown.hidden = true
+        let urlString = NSUserDefaults.standardUserDefaults().stringForKey("url")
         NSUserDefaults.standardUserDefaults().removeObjectForKey("url")
         self.initializing = true
         self.releaseOtherViews(nil)
         self.label.hidden = false
         self.addressBox.hidden = false
+        if(urlString != nil) {
+            self.addressBox.stringValue = urlString!
+        }
         self.addressBox.becomeFirstResponder()
         self.goButton.hidden = false
         self.view.needsLayout = true
@@ -73,6 +82,7 @@ class ViewController: NSViewController {
         if let _url = NSURL(string: urlString) {
             self.url = _url
             getJSON()
+            self.setCountdowns()
         }
         else {
             let alert = NSAlert()
@@ -89,7 +99,7 @@ class ViewController: NSViewController {
     private func releaseOtherViews(imageView: NSView?) {
         for view in self.view.subviews {
             // hide views that need to retain properties
-            if(view != imageView && !(view.hidden)) {
+            if(view != imageView && view != self.countdown && !(view.hidden)) {
                 view.removeFromSuperview()
             }
         }
@@ -106,7 +116,7 @@ class ViewController: NSViewController {
         playerLayer.videoGravity = AVLayerVideoGravityResize
         videoView.layer = playerLayer
         videoView.layer?.backgroundColor = CGColorCreateGenericRGB(0, 0, 0, 0)
-        self.view.addSubview(videoView, positioned: NSWindowOrderingMode.Above, relativeTo: nil)
+        self.view.addSubview(videoView, positioned: NSWindowOrderingMode.Below, relativeTo: self.countdown)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "playerDidFinishPlaying:", name: AVPlayerItemDidPlayToEndTimeNotification, object: player.currentItem)
         player.play()
     }
@@ -127,7 +137,7 @@ class ViewController: NSViewController {
         imageView.wantsLayer = true
         imageView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
         dispatch_async(dispatch_get_main_queue(), { () -> Void in
-            self.view.addSubview(imageView, positioned: NSWindowOrderingMode.Above, relativeTo: nil)
+            self.view.addSubview(imageView, positioned: NSWindowOrderingMode.Below, relativeTo: self.countdown)
             NSAnimationContext.runAnimationGroup(
                 { (context) -> Void in
                     context.duration = 1.0
@@ -205,6 +215,20 @@ class ViewController: NSViewController {
     private func stopUpdater() {
         dispatch_async(dispatch_get_main_queue(),{
             self.updateTimer.invalidate()
+        })
+    }
+    
+    private func stopCountdowns() {
+        dispatch_async(dispatch_get_main_queue(),{
+            self.countdownTimer.invalidate()
+        })
+    }
+    
+    private func setCountdowns() {
+        dispatch_async(dispatch_get_main_queue(),{
+            self.countdownTimer.invalidate()
+            self.countdownTimer = NSTimer(timeInterval: 0.1, target: self, selector: "updateCountdowns", userInfo: nil, repeats: true)
+            NSRunLoop.currentRunLoop().addTimer(self.countdownTimer, forMode: NSRunLoopCommonModes)
         })
     }
     
@@ -316,8 +340,65 @@ class ViewController: NSViewController {
         self.startSlideshow()
     }
     
+    func getDayOfWeek(date: NSDate)->Int? {
+        let myCalendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)
+        let myComponents = myCalendar?.components(NSCalendarUnit.Weekday, fromDate: date)
+        let weekDay = myComponents?.weekday
+        return weekDay
+    }
+    
+    func updateCountdowns() {
+        let date = NSDate()
+        let currentDay = getDayOfWeek(date)
+        let calendar = NSCalendar.currentCalendar()
+        let components = calendar.components([NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Second], fromDate: date)
+        let seconds = components.hour * 3600 + components.minute * 60 + components.second
+        var hide = true
+        for countdown in self.countdowns {
+            if(countdown.day != currentDay || countdown.duration > countdown.minute + countdown.hour * 60) {
+                continue
+            }
+            let countdownSeconds = countdown.hour * 3600 + countdown.minute * 60
+            let difference = countdownSeconds - seconds
+            if(difference > 0 && difference <= countdown.duration * 60) {
+                var minuteString = ""
+                var secondString = ""
+                hide = false
+                let minuteDifference = Int(difference / 60)
+                let secondDifference = difference % 60
+                if(minuteDifference < 10) {
+                    minuteString = "0" + String(minuteDifference)
+                }
+                else {
+                    minuteString = String(minuteDifference)
+                }
+                if(secondDifference < 10) {
+                    secondString = "0" + String(secondDifference)
+                }
+                else {
+                    secondString = String(secondDifference)
+                }
+                self.countdown.stringValue = minuteString + ":" + secondString
+                break
+            }
+        }
+        self.countdown.hidden = hide
+    }
+    
     func update() {
         self.getJSON()
+    }
+    
+    private func generateCountdowns(countdowns: [JSON]) {
+        self.countdowns = []
+        for countdown in countdowns {
+            let day = countdown["day"].stringValue
+            let hour = countdown["hour"].stringValue
+            let minute = countdown["minute"].stringValue
+            let duration = countdown["duration"].stringValue
+            let newCountdown = Countdown(day: day, hour: hour, minute: minute, duration: duration)
+            self.countdowns.append(newCountdown)
+        }
     }
     
     private func getJSON() {
@@ -352,6 +433,9 @@ class ViewController: NSViewController {
                     }
                 }
                 let json = JSON(data: dumpData!)
+                if let countdowns = json["countdowns"].array {
+                    self.generateCountdowns(countdowns)
+                }
                 if let items = json["items"].array {
                     let cachedItems = cachedJSON["items"].array
                     if(items.count > 0) {
@@ -417,6 +501,9 @@ class ViewController: NSViewController {
                 if(self.initializing) {
                     if let cachedData = NSData(contentsOfFile: String(jsonLocation)) {
                         let json = JSON(data: cachedData)
+                        if let countdowns = json["countdowns"].array {
+                            self.generateCountdowns(countdowns)
+                        }
                         if let items = json["items"].array {
                             if(items.count > 0) {
                                 for item in items {
@@ -470,13 +557,15 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.window?.acceptsMouseMovedEvents = true
-        if let urlString = NSUserDefaults.standardUserDefaults().stringForKey("url") {
-            self.loadSignage(urlString)
-        }
+        self.countdown.hidden = true
+        self.countdown.alphaValue = 0.7
     }
     
     override func viewDidAppear() {
         super.viewDidAppear()
+        if let urlString = NSUserDefaults.standardUserDefaults().stringForKey("url") {
+            self.loadSignage(urlString)
+        }
         if(self.addressBox.isDescendantOf(self.view)) {
             dispatch_async(dispatch_get_main_queue(), { () -> Void in
                 self.addressBox.becomeFirstResponder()

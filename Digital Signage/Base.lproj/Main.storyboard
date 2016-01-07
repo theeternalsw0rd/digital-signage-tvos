@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="9531" systemVersion="15D9c" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="9531" systemVersion="15D13b" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
     <dependencies>
         <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
@@ -172,7 +172,7 @@
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Q25-4Y-o1r">
                                 <rect key="frame" x="18" y="233" width="69" height="17"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="65" id="o35-lJ-PYD"/>
+                                    <constraint firstAttribute="width" constant="65" id="qO9-zV-b3q"/>
                                 </constraints>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="URL" id="AZ2-Aq-7on">
                                     <font key="font" metaFont="system"/>
@@ -193,7 +193,7 @@
                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="44W-9k-BEm">
                                 <rect key="frame" x="20" y="203" width="292" height="22"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="292" id="0Gb-hj-f1b"/>
+                                    <constraint firstAttribute="width" constant="292" id="2rg-Wk-IGa"/>
                                 </constraints>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="c2D-Xm-uQV">
                                     <font key="font" metaFont="system"/>
@@ -204,18 +204,33 @@
                                     <action selector="addressBoxAction:" target="XfG-lQ-9wD" id="apb-By-egH"/>
                                 </connections>
                             </textField>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uMe-xy-dTN">
+                                <rect key="frame" x="331" y="193" width="131" height="57"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="57" id="Fzy-sc-nat"/>
+                                    <constraint firstAttribute="width" constant="131" id="HQT-aW-lRu"/>
+                                </constraints>
+                                <textFieldCell key="cell" lineBreakMode="truncatingTail" allowsUndo="NO" sendsActionOnEndEditing="YES" alignment="center" title="00:00" drawsBackground="YES" id="FfO-Gl-JF3">
+                                    <font key="font" size="35" name="Menlo-Regular"/>
+                                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                                </textFieldCell>
+                            </textField>
                         </subviews>
                         <constraints>
-                            <constraint firstItem="44W-9k-BEm" firstAttribute="top" secondItem="Q25-4Y-o1r" secondAttribute="bottom" constant="8" symbolic="YES" id="4YK-x3-uFm"/>
-                            <constraint firstItem="44W-9k-BEm" firstAttribute="top" secondItem="m2S-Jp-Qdl" secondAttribute="top" constant="45" id="C95-GO-OIh"/>
-                            <constraint firstItem="Q25-4Y-o1r" firstAttribute="leading" secondItem="44W-9k-BEm" secondAttribute="leading" id="WCD-Ni-VLi"/>
-                            <constraint firstItem="44W-9k-BEm" firstAttribute="leading" secondItem="TdP-7B-p8w" secondAttribute="leading" id="j9R-Hr-yuV"/>
-                            <constraint firstItem="TdP-7B-p8w" firstAttribute="top" secondItem="44W-9k-BEm" secondAttribute="bottom" constant="8" symbolic="YES" id="kZo-YC-PwW"/>
-                            <constraint firstItem="44W-9k-BEm" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" constant="20" symbolic="YES" id="st2-ZP-cVk"/>
+                            <constraint firstItem="Q25-4Y-o1r" firstAttribute="leading" secondItem="44W-9k-BEm" secondAttribute="leading" id="3VP-Ep-qhM"/>
+                            <constraint firstItem="TdP-7B-p8w" firstAttribute="top" secondItem="44W-9k-BEm" secondAttribute="bottom" constant="8" symbolic="YES" id="9Xa-HF-M5w"/>
+                            <constraint firstItem="Q25-4Y-o1r" firstAttribute="top" secondItem="m2S-Jp-Qdl" secondAttribute="top" constant="20" symbolic="YES" id="9xM-B5-6D7"/>
+                            <constraint firstItem="44W-9k-BEm" firstAttribute="top" secondItem="Q25-4Y-o1r" secondAttribute="bottom" constant="8" symbolic="YES" id="BZ0-9X-AQL"/>
+                            <constraint firstItem="uMe-xy-dTN" firstAttribute="top" secondItem="Q25-4Y-o1r" secondAttribute="top" id="IRz-Nf-S5G"/>
+                            <constraint firstAttribute="trailing" secondItem="uMe-xy-dTN" secondAttribute="trailing" constant="18" id="JVr-ul-fbV"/>
+                            <constraint firstItem="TdP-7B-p8w" firstAttribute="leading" secondItem="44W-9k-BEm" secondAttribute="leading" id="MWy-Sp-aHb"/>
+                            <constraint firstItem="Q25-4Y-o1r" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" constant="20" symbolic="YES" id="biD-ao-qhq"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="addressBox" destination="44W-9k-BEm" id="5YN-3Q-hqc"/>
+                        <outlet property="countdown" destination="uMe-xy-dTN" id="f05-tx-PVn"/>
                         <outlet property="goButton" destination="TdP-7B-p8w" id="2dR-wc-KHn"/>
                         <outlet property="label" destination="Q25-4Y-o1r" id="dUA-H3-9j9"/>
                     </connections>
