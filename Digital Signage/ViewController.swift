@@ -26,6 +26,7 @@ class ViewController: NSViewController {
     private var countdownTimer = NSTimer()
     private var updateReady = false
     private var initializing = true
+    private var animating = false
     private var applicationSupport = Path.UserApplicationSupport + "/theeternalsw0rd/Digital Signage"
     private let appDelegate = NSApplication.sharedApplication().delegate as! AppDelegate
     private let downloadQueue = NSOperationQueue()
@@ -47,22 +48,27 @@ class ViewController: NSViewController {
     }
     
     func resetView() {
-        self.stopSlideshow()
-        self.stopUpdater()
-        self.stopCountdowns()
-        self.countdown.hidden = true
-        let urlString = NSUserDefaults.standardUserDefaults().stringForKey("url")
-        NSUserDefaults.standardUserDefaults().removeObjectForKey("url")
-        self.initializing = true
-        self.releaseOtherViews(nil)
-        self.label.hidden = false
-        self.addressBox.hidden = false
-        if(urlString != nil) {
-            self.addressBox.stringValue = urlString!
-        }
-        self.addressBox.becomeFirstResponder()
-        self.goButton.hidden = false
-        self.view.needsLayout = true
+        self.appDelegate.backgroundThread(background: {
+            while(self.animating) {
+                usleep(10000)
+            }
+        }, completion: {
+            self.stopSlideshow()
+            self.stopUpdater()
+            self.stopCountdowns()
+            self.countdown.hidden = true
+            let urlString = NSUserDefaults.standardUserDefaults().stringForKey("url")
+            self.initializing = true
+            self.releaseOtherViews(nil)
+            self.label.hidden = false
+            self.addressBox.hidden = false
+            if(urlString != nil) {
+                self.addressBox.stringValue = urlString!
+            }
+            self.addressBox.becomeFirstResponder()
+            self.goButton.hidden = false
+            self.view.needsLayout = true
+        })
     }
     
     private func loadSignage(urlString: String) {
@@ -138,6 +144,7 @@ class ViewController: NSViewController {
         imageView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
         dispatch_async(dispatch_get_main_queue(), { () -> Void in
             self.view.addSubview(imageView, positioned: NSWindowOrderingMode.Below, relativeTo: self.countdown)
+            self.animating = true
             NSAnimationContext.runAnimationGroup(
                 { (context) -> Void in
                     context.duration = 1.0
@@ -154,6 +161,7 @@ class ViewController: NSViewController {
                     else {
                         self.setTimer()
                     }
+                    self.animating = false
                 }
             )
         })
