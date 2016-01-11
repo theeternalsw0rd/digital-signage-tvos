@@ -16,12 +16,28 @@ simple by receiving a JSON response from a server with the following structure:
 			"md5sum": "1c35f040c23a2015d303df9e812485c2",
 			"filesize": 2159191
 		}
+	],
+	"countdowns":[
+		{
+			"day": 0,
+			"hour": 14,
+			"minute": 30,
+			"duration": 30
+		}
 	]
 }
 ```
 
 The JSON response and all resources must be served over https unless you modify
 the project in xcode to allow the application to use http.
+
+Countdowns that overlap will show the first item from the array.
+Countdowns display in the top right corner of the slideshow.
+Days are the day of the week from 0 to 6 with Sunday being 0.
+The hour and minute are when the countdown should be 0, not when the countdown starts.
+The hour should be in military time. Currently the timezone is whatever the client computer is set to.
+The duration is in minutes and is not at this point fractional.
+Countdowns that overlap days have not been tested.
 
 This application can handle jpeg and png images and any video format supported
 by Apple's AV Foundation. This application does not support subtitles or captions
