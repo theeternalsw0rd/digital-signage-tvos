@@ -19,7 +19,7 @@ simple by receiving a JSON response from a server with the following structure:
 	],
 	"countdowns":[
 		{
-			"day": 0,
+			"day": 1,
 			"hour": 14,
 			"minute": 30,
 			"duration": 30
@@ -33,7 +33,7 @@ the project in xcode to allow the application to use http.
 
 Countdowns that overlap will show the first item from the array.
 Countdowns display in the top right corner of the slideshow.
-Days are the day of the week from 0 to 6 with Sunday being 0.
+Days are the day of the week from 1 to 7 with Sunday being 1.
 The hour and minute are when the countdown should be 0, not when the countdown starts.
 The hour should be in military time. Currently the timezone is whatever the client computer is set to.
 The duration is in minutes and is not at this point fractional.
