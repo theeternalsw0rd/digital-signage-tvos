@@ -9,13 +9,13 @@
 //  This file is subject to the terms and conditions defined in LICENSE.md
 
 import Foundation
-import AppKit
+import UIKit
 import FileKit
 
 class SlideshowItem: NSOperation {
     var url = NSURL()
     var type = "image"
-    var image = NSImage()
+    var image = UIImage()
     var path: Path
     var status = 0
     

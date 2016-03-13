@@ -8,13 +8,13 @@
 //  The MIT License (MIT)
 //  This file is subject to the terms and conditions defined in LICENSE.md
 
-import Cocoa
+import UIKit
 import FileKit
 import AVKit
 import AVFoundation
 import SwiftyJSON
 
-class ViewController: NSViewController {
+class ViewController: UIViewController {
     private var url = NSURL()
     private var slideshow : [SlideshowItem] = []
     private var slideshowLoader : [SlideshowItem] = []
@@ -27,24 +27,19 @@ class ViewController: NSViewController {
     private var updateReady = false
     private var initializing = true
     private var animating = false
-    private var applicationSupport = Path.UserApplicationSupport + "/theeternalsw0rd/Digital Signage"
-    private let appDelegate = NSApplication.sharedApplication().delegate as! AppDelegate
+    private let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+    private var applicationSupport = Path(NSTemporaryDirectory())
     private let downloadQueue = NSOperationQueue()
     
-    @IBOutlet weak var countdown: NSTextField!
-    @IBOutlet weak var goButton: NSButton!
-    @IBOutlet weak var addressBox: NSTextField!
-    @IBOutlet weak var label: NSTextField!
-    @IBAction func goButtonAction(sender: AnyObject) {
-        let urlString = self.addressBox.stringValue
-        NSUserDefaults.standardUserDefaults().setObject(urlString, forKey: "url")
-        self.loadSignage(urlString)
-    }
     
-    @IBAction func addressBoxAction(sender: AnyObject) {
-        let urlString = self.addressBox.stringValue
+    @IBOutlet weak var countdown: UILabel!
+    @IBOutlet weak var goButton: UIButton!
+    @IBOutlet weak var addressBox: UITextField!
+    @IBOutlet weak var label: UILabel!
+    @IBAction func goButtonAction(sender: AnyObject) {
+        let urlString = self.addressBox.text
         NSUserDefaults.standardUserDefaults().setObject(urlString, forKey: "url")
-        self.loadSignage(urlString)
+        self.loadSignage(urlString!)
     }
     
     func resetView() {
@@ -63,38 +58,24 @@ class ViewController: NSViewController {
             self.label.hidden = false
             self.addressBox.hidden = false
             if(urlString != nil) {
-                self.addressBox.stringValue = urlString!
+                self.addressBox.text = urlString!
             }
             self.addressBox.becomeFirstResponder()
             self.goButton.hidden = false
-            self.view.needsLayout = true
         })
     }
     
     private func loadSignage(urlString: String) {
         self.setUpdateTimer()
-        if(!Path(stringInterpolation: self.applicationSupport).exists) {
-            do {
-                try Path(stringInterpolation: self.applicationSupport).createDirectory()
-            }
-            catch {
-                let alert = NSAlert()
-                alert.messageText = "Could not create caching directory."
-                alert.addButtonWithTitle("OK")
-                let _ = alert.runModal()
-                return
-            }
-        }
         if let _url = NSURL(string: urlString) {
             self.url = _url
             getJSON()
             self.setCountdowns()
         }
         else {
-            let alert = NSAlert()
-            alert.messageText = "URL appears to be malformed."
-            alert.addButtonWithTitle("OK")
-            let _ = alert.runModal()
+            let alert = UIAlertController(title: "Error", message: "URL appears to be malformed.", preferredStyle: .Alert)
+            alert.addAction(UIAlertAction(title: "Ok", style: .Default) { _ in })
+            self.presentViewController(alert, animated: true){}
         }
     }
     
@@ -102,7 +83,7 @@ class ViewController: NSViewController {
         self.showNextSlide()
     }
     
-    private func releaseOtherViews(imageView: NSView?) {
+    private func releaseOtherViews(imageView: UIView?) {
         for view in self.view.subviews {
             // hide views that need to retain properties
             if(view != imageView && view != self.countdown && !(view.hidden)) {
@@ -111,59 +92,55 @@ class ViewController: NSViewController {
         }
     }
     
-    private func playVideo(frameSize: NSSize, boundsSize: NSSize, uri: NSURL) {
-        let videoView = NSView()
-        videoView.frame.size = frameSize
-        videoView.bounds.size = boundsSize
-        videoView.wantsLayer = true
-        videoView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
-        let player = AVPlayer(URL: uri)
-        let playerLayer = AVPlayerLayer(player: player)
-        playerLayer.videoGravity = AVLayerVideoGravityResize
-        videoView.layer = playerLayer
-        videoView.layer?.backgroundColor = CGColorCreateGenericRGB(0, 0, 0, 0)
-        self.view.addSubview(videoView, positioned: NSWindowOrderingMode.Below, relativeTo: self.countdown)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "playerDidFinishPlaying:", name: AVPlayerItemDidPlayToEndTimeNotification, object: player.currentItem)
-        player.play()
+    private func playVideo(uri: NSURL) {
+        dispatch_async(dispatch_get_main_queue(), { () -> Void in
+            let videoView = UIView()
+            let frameSize = CGSize(width: 1920, height: 1080)
+            let boundsSize = CGSize(width: 1920, height: 1080)
+            videoView.frame.size = frameSize
+            videoView.bounds.size = boundsSize
+            let player = AVPlayer(URL: uri)
+            let playerLayer = AVPlayerLayer(player: player)
+            playerLayer.frame = videoView.frame
+            playerLayer.videoGravity = AVLayerVideoGravityResize
+            videoView.layer.addSublayer(playerLayer)
+            videoView.alpha = 0
+            self.view.insertSubview(videoView, belowSubview: self.countdown)
+            let time = CMTimeMake(0, 1)
+            player.seekToTime(time)
+            NSNotificationCenter.defaultCenter().addObserver(self, selector: "playerDidFinishPlaying:", name: AVPlayerItemDidPlayToEndTimeNotification, object: player.currentItem)
+            self.view.layoutIfNeeded()
+            UIView.animateWithDuration(2.0, animations: { videoView.alpha = 1.0}, completion: { (finished: Bool) -> Void in
+                player.play()
+            })
+        })
     }
     
-    private func createImageView(image: NSImage, thumbnail: Bool, frameSize: NSSize, boundsSize: NSSize) {
-        let imageView = MyImageView()
-        imageView.removeConstraints(imageView.constraints)
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.alphaValue = 0
-        if(thumbnail) {
-            imageView.image = image
-        }
-        else {
-            imageView.imageWithSize(image, w: frameSize.width, h: frameSize.height)
-        }
-        imageView.frame.size = frameSize
-        imageView.bounds.size = boundsSize
-        imageView.wantsLayer = true
-        imageView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
+    private func createImageView(image: UIImage, thumbnail: Bool) {
         dispatch_async(dispatch_get_main_queue(), { () -> Void in
-            self.view.addSubview(imageView, positioned: NSWindowOrderingMode.Below, relativeTo: self.countdown)
+            let imageView = UIImageView()
+            imageView.contentMode = .ScaleAspectFill
+            imageView.removeConstraints(imageView.constraints)
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            imageView.alpha = 0
+            imageView.image = image
+            imageView.frame.size = CGSize(width: 1920, height: 1080)
+            self.view.insertSubview(imageView, belowSubview: self.countdown)
             self.animating = true
-            NSAnimationContext.runAnimationGroup(
-                { (context) -> Void in
-                    context.duration = 1.0
-                    imageView.animator().alphaValue = 1.0
-                    
-                }, completionHandler: { () -> Void in
-                    self.releaseOtherViews(imageView)
-                    if(thumbnail) {
-                        let item = self.slideshow[self.currentSlideIndex]
-                        let path = item.path.rawValue
-                        let uri = NSURL(fileURLWithPath: path)
-                        self.playVideo(frameSize, boundsSize: boundsSize, uri: uri)
-                    }
-                    else {
-                        self.setTimer()
-                    }
-                    self.animating = false
+            self.view.layoutIfNeeded()
+            UIView.animateWithDuration(2.0, animations: { imageView.alpha = 1.0}, completion: { (finished: Bool) -> Void in
+                self.releaseOtherViews(imageView)
+                if(thumbnail) {
+                    let item = self.slideshow[self.currentSlideIndex]
+                    let path = item.path.rawValue
+                    let uri = NSURL(fileURLWithPath: path)
+                    self.playVideo(uri)
                 }
-            )
+                else {
+                    self.setTimer()
+                }
+                self.animating = false
+            })
         })
     }
     
@@ -181,27 +158,13 @@ class ViewController: NSViewController {
             let item = self.slideshow[self.currentSlideIndex]
             let type = item.type
             let path = item.path.rawValue
-            let frameSize = self.view.frame.size
-            let boundsSize = self.view.bounds.size
             if(type == "image") {
-                let image = NSImage(contentsOfFile: path)
-                self.createImageView(image!, thumbnail: false, frameSize: frameSize, boundsSize: boundsSize)
+                let image = UIImage(contentsOfFile: path)
+                self.createImageView(image!, thumbnail: false)
             }
             else if(type == "video") {
                 let uri = NSURL(fileURLWithPath: path)
-                let avAsset = AVURLAsset(URL: uri)
-                let avAssetImageGenerator = AVAssetImageGenerator(asset: avAsset)
-                let time = NSValue(CMTime: CMTimeMake(0, 1))
-                avAssetImageGenerator.generateCGImagesAsynchronouslyForTimes([time],
-                    completionHandler: {(_, image:CGImage?, _, _, error:NSError?) in
-                        if(error == nil) {
-                            self.createImageView(NSImage(CGImage: image!, size: frameSize), thumbnail: true, frameSize: frameSize, boundsSize: boundsSize)
-                        }
-                        else {
-                            self.playVideo(frameSize, boundsSize: boundsSize, uri: uri)
-                        }
-                    }
-                )
+                self.playVideo(uri)
             }
             else {
                 self.setTimer()
@@ -297,12 +260,6 @@ class ViewController: NSViewController {
                 self.addressBox.hidden = true
                 self.label.hidden = true
                 self.view.becomeFirstResponder()
-                if(!((self.view.window?.styleMask)! & NSFullScreenWindowMask == NSFullScreenWindowMask)) {
-                    self.view.window?.toggleFullScreen(nil)
-                }
-                let view = self.view as! MyView
-                view.trackMouse = true
-                view.setTimeout()
                 self.updateSlideshow()
             }
             else {
@@ -386,7 +343,7 @@ class ViewController: NSViewController {
                 else {
                     secondString = String(secondDifference)
                 }
-                self.countdown.stringValue = minuteString + ":" + secondString
+                self.countdown.text = minuteString + ":" + secondString
                 break
             }
         }
@@ -454,6 +411,7 @@ class ViewController: NSViewController {
                                     if let type = item["type"].string {
                                         if let filename = itemNSURL.lastPathComponent {
                                             let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
+                                            NSLog("Path :" + cachePath.rawValue + "\n\n\n\n\n\n")
                                             let slideshowItem = SlideshowItem(url: itemNSURL, type: type, path: cachePath)
                                             do {
                                                 let fileAttributes = try NSFileManager.defaultManager().attributesOfItemAtPath(NSURL(fileURLWithPath: cachePath.rawValue, isDirectory: false).path!)
@@ -489,20 +447,22 @@ class ViewController: NSViewController {
                         self.downloadItems()
                     }
                     else {
-                        let alert = NSAlert()
-                        alert.messageText = "Couldn't load any items."
+                        var message = ""
                         if let dataString = String(data: dumpData!, encoding: NSUTF8StringEncoding) {
-                            alert.informativeText = dataString
+                            message = "Couldn't load any items.\n" + dataString
                         }
-                        alert.addButtonWithTitle("OK")
-                        let _ = alert.runModal()
+                        else {
+                            message = "Couldn't load any items."
+                        }
+                        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .Alert)
+                        alert.addAction(UIAlertAction(title: "Ok", style: .Default) { _ in })
+                        self.presentViewController(alert, animated: true){}
                     }
                 }
                 else {
-                    let alert = NSAlert()
-                    alert.messageText = "Couldn't process data."
-                    alert.addButtonWithTitle("OK")
-                    let _ = alert.runModal()
+                    let alert = UIAlertController(title: "Error", message: "Couldn't process data.", preferredStyle: .Alert)
+                    alert.addAction(UIAlertAction(title: "Ok", style: .Default) { _ in })
+                    self.presentViewController(alert, animated: true){}
                 }
             }
             else {
@@ -547,10 +507,9 @@ class ViewController: NSViewController {
                         }
                     }
                     else {
-                        let alert = NSAlert()
-                        alert.messageText = "Couldn't load data."
-                        alert.addButtonWithTitle("OK")
-                        let _ = alert.runModal()
+                        let alert = UIAlertController(title: "Error", message: "Couldn't load data.", preferredStyle: .Alert)
+                        alert.addAction(UIAlertAction(title: "Ok", style: .Default) { _ in })
+                        self.presentViewController(alert, animated: true){}
                     }
                 }
                 else {
@@ -564,26 +523,27 @@ class ViewController: NSViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.view.window?.acceptsMouseMovedEvents = true
         self.countdown.hidden = true
-        self.countdown.alphaValue = 0.7
+        self.countdown.alpha = 0.7
     }
     
-    override func viewDidAppear() {
-        super.viewDidAppear()
+    override func pressesBegan(presses: Set<UIPress>, withEvent event: UIPressesEvent?) {
+        if(presses.first?.type == UIPressType.Menu) {
+            self.resetView()
+        } else {
+            // perform default action (in your case, exit)
+            super.pressesBegan(presses, withEvent: event)
+        }
+    }
+    
+    override func viewDidAppear(animated: Bool) {
         if let urlString = NSUserDefaults.standardUserDefaults().stringForKey("url") {
             self.loadSignage(urlString)
         }
-        if(self.addressBox.isDescendantOf(self.view)) {
+        if(self.addressBox.isDescendantOfView(self.view)) {
             dispatch_async(dispatch_get_main_queue(), { () -> Void in
                 self.addressBox.becomeFirstResponder()
             })
-        }
-    }
-
-    override var representedObject: AnyObject? {
-        didSet {
-        // Update the view, if already loaded.
         }
     }
 }
