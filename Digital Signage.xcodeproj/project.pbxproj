@@ -317,12 +317,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "Brand Assets";
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "Digital Signage/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "rocks.theeternalsw0rd.Digital-Signage";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TVOS_DEPLOYMENT_TARGET = 9.1;
@@ -335,12 +337,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "Brand Assets";
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "Digital Signage/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "rocks.theeternalsw0rd.Digital-Signage";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				TVOS_DEPLOYMENT_TARGET = 9.1;
 			};
