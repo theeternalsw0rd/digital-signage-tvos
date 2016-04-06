@@ -1,3 +1,5 @@
+Project is abandoned until such a time Apple decides to allow better permanent local storage solutions.
+
 This application aims to make displaying a fullscreen slideshow on tvOS.
 simple by receiving a JSON response from a server with the following structure:
 
